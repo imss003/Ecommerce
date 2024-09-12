@@ -41,6 +41,7 @@ export const getCartProducts = async(req, res) => {
 export const removeAllFromCart = async(req, res) => {
     try {
         const {productId} = req.body;
+        console.log("Id in removeAllFromCart controller is: ", productId);
         const user = req.user;
         if(!productId){
             user.cartItems = [];
@@ -48,6 +49,8 @@ export const removeAllFromCart = async(req, res) => {
         else{
             user.cartItems = user.cartItems.filter((item) => item.id !== productId);
         }
+        await user.save();
+        res.json(user.cartItems);
     } catch (error) {
         console.log("Error in removeAllCartItems controller: ", error.message);
         res.status(500).json({

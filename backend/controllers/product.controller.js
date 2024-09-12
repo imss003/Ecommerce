@@ -54,7 +54,7 @@ export const getFeaturedProducts = async(req, res) => {//we will store it in red
 export const createProduct = async(req, res) => {
     try {
         const {name, description, price, image, category} = req.body;
-        let cloudinaryResponse = nul;
+        let cloudinaryResponse = null;
         if(image){
             cloudinaryResponse = await cloudinary.uploader.upload(image,{folder:"products"});
         }
@@ -65,10 +65,7 @@ export const createProduct = async(req, res) => {
             image: cloudinaryResponse?.secure_url?cloudinaryResponse.secure_url : "",
             category
         });
-        res.status(200).json({
-            message: "Product created successfully!!",
-            product
-        });
+        res.status(200).json(product);
     } catch (error) {
         console.log("Error in createProduct controller: ", error.message);
         res.status(500).json({
@@ -77,36 +74,62 @@ export const createProduct = async(req, res) => {
     }   
 }
 
-export const deleteProduct = async(req, res) => {
+export const deleteProduct = async (req, res) => {
     try {
-        const product = await Product.findById(req.params.id);
-        if(!product){
-            return res.status(404).json({
-                message: "Product not found"
-            });
-        }
-        if(product.image){
-            const publicId = product.image.split("/").pop().split(".")[0];//used to get the public id from url
-            try {
-                await cloudinary.uploader.destroy(`products/${publicId}`);
-                console.log("Deleted image from cloudinary!!");
-
-            } catch (error) {
-                console.log("Deleting image from cloudinary failed!!");
-
-            }
-        }
-        await Product.findByIdAndDelete(req.params.id);
-        res.status(200).json({
-            message: "Deleted the product successfully!!"
+      const product = await Product.findById(req.params.id);
+      if (!product) {
+        return res.status(404).json({
+          message: "Product not found",
         });
+      }
+  
+      // Delete image from Cloudinary if it exists
+      if (product.image) {
+        const publicId = product.image.split("/").pop().split(".")[0]; // Used to get the public ID from URL
+        try {
+          await cloudinary.uploader.destroy(`products/${publicId}`);
+          console.log("Deleted image from Cloudinary!!");
+        } catch (error) {
+          console.log("Deleting image from Cloudinary failed!!", error.message);
+        }
+      }
+  
+      // Delete the product from MongoDB
+      await Product.findByIdAndDelete(req.params.id);
+  
+      // If the product is featured, update Redis cache
+      if (product.isFeatured) {
+        try {
+          let featuredProducts = await redis.get("featured_products");
+          if (featuredProducts) {
+            // Parse the existing featured products list
+            featuredProducts = JSON.parse(featuredProducts);
+  
+            // Filter out the deleted product from the list
+            featuredProducts = featuredProducts.filter(
+              (featuredProduct) => featuredProduct._id.toString() !== req.params.id
+            );
+  
+            // Update the Redis cache with the new list of featured products
+            await redis.set("featured_products", JSON.stringify(featuredProducts));
+            console.log("Updated Redis cache after deleting a featured product.");
+          }
+        } catch (error) {
+          console.log("Error while updating Redis cache: ", error.message);
+        }
+      }
+  
+      res.status(200).json({
+        message: "Deleted the product successfully!!",
+      });
     } catch (error) {
-        console.log("Error in deleteProduct controller: ", error.message);
-        res.status(500).json({
-            message: "Internal Server Error!!"
-        });
+      console.log("Error in deleteProduct controller: ", error.message);
+      res.status(500).json({
+        message: "Internal Server Error!!",
+      });
     }
-}
+  };
+  
 
 export const getRecommendedProducts = async(req, res) => {
     try {
@@ -136,19 +159,14 @@ export const getRecommendedProducts = async(req, res) => {
 }
 
 export const getProductByCategory = async(req, res) => {
-    try {
-        const category = req.params.category;
-        const products = await Product.find({
-            message: "Successfully got products by category!!",
-            products
-        });
-        res.status(200).json(products);
-    } catch (error) {
-        console.log("Error in getProductByCategory: ", error.message);
-        res.status(500).json({
-            message: "Internal Server Error!!"
-        });
-    }
+    const { category } = req.params;
+	try {
+		const products = await Product.find({ category });
+		res.json({ products });
+	} catch (error) {
+		console.log("Error in getProductsByCategory controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
 }
 
 export const toggleFeaturedProducts = async(req, res) => {
