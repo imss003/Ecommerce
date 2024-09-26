@@ -1,12 +1,23 @@
 import { useEffect, useState } from "react";
 import { ShoppingCart, ChevronLeft, ChevronRight } from "lucide-react";
 import { useCartStore } from "../stores/useCartStore";
+import ProductCard from "./ProductCard";
+import { useUserStore } from "../stores/useUserStore";
+import {toast} from "react-toastify";
 
 const FeaturedProducts = ({ featuredProducts }) => {
 	const [currentIndex, setCurrentIndex] = useState(0);
 	const [itemsPerPage, setItemsPerPage] = useState(4);
 
+	const {user} = useUserStore();
 	const { addToCart } = useCartStore();
+	const handleAddToCart = async(product) => {
+		if(!user){
+			toast.error("Please Login First!!");
+			return;
+		}
+		addToCart(product);
+	}
 
 	useEffect(() => {
 		const handleResize = () => {
@@ -58,7 +69,7 @@ const FeaturedProducts = ({ featuredProducts }) => {
 												${product.price.toFixed(2)}
 											</p>
 											<button
-												onClick={() => addToCart(product)}
+												onClick={() => handleAddToCart(product)}
 												className='w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 px-4 rounded transition-colors duration-300 
 												flex items-center justify-center'
 											>
@@ -68,6 +79,7 @@ const FeaturedProducts = ({ featuredProducts }) => {
 										</div>
 									</div>
 								</div>
+								// <ProductCard product={product} />
 							))}
 						</div>
 					</div>
@@ -75,7 +87,7 @@ const FeaturedProducts = ({ featuredProducts }) => {
 						onClick={prevSlide}
 						disabled={isStartDisabled}
 						className={`absolute top-1/2 -left-4 transform -translate-y-1/2 p-2 rounded-full transition-colors duration-300 ${
-							isStartDisabled ? "bg-gray-400 cursor-not-allowed" : "bg-emerald-600 hover:bg-emerald-500"
+							isStartDisabled ? "bg-gray-400/50 cursor-not-allowed" : "bg-emerald-600/50 hover:bg-emerald-500"
 						}`}
 					>
 						<ChevronLeft className='w-6 h-6' />
@@ -85,7 +97,7 @@ const FeaturedProducts = ({ featuredProducts }) => {
 						onClick={nextSlide}
 						disabled={isEndDisabled}
 						className={`absolute top-1/2 -right-4 transform -translate-y-1/2 p-2 rounded-full transition-colors duration-300 ${
-							isEndDisabled ? "bg-gray-400 cursor-not-allowed" : "bg-emerald-600 hover:bg-emerald-500"
+							isEndDisabled ? "bg-gray-400/50 cursor-not-allowed" : "bg-emerald-600/50 hover:bg-emerald-500"
 						}`}
 					>
 						<ChevronRight className='w-6 h-6' />

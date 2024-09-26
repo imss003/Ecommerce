@@ -3,6 +3,7 @@ import { ShoppingCart, UserPlus, LogIn, LogOut, Lock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useUserStore } from '../stores/useUserStore';
 import { useCartStore } from '../stores/useCartStore';
+import ProfileDropdown from './ProfileDropdown';
 
 const Navbar = () => {
     const {user, logout} = useUserStore();
@@ -70,19 +71,20 @@ const Navbar = () => {
                             }
                             {
                                 user ? (
-                                    <button
-                                        className='bg-blue-700 hover:bg-blue-600 text-white py-2 px-4 rounded-md flex items-center transition duration-300 ease-in-out'
-                                        onClick={logout}
-                                    >
-                                        <LogOut 
-                                            size={18} 
-                                        />
-                                        <span 
-                                            className='hidden sm:inline ml-2'
-                                        >
-                                            Log Out
-                                        </span>
-                                    </button>
+                                    // <button
+                                    //     className='bg-blue-700 hover:bg-blue-600 text-white py-2 px-4 rounded-md flex items-center transition duration-300 ease-in-out'
+                                    //     onClick={logout}
+                                    // >
+                                    //     <LogOut 
+                                    //         size={18} 
+                                    //     />
+                                    //     <span 
+                                    //         className='hidden sm:inline ml-2'
+                                    //     >
+                                    //         Log Out
+                                    //     </span>
+                                    // </button>
+                                    <ProfileDropdown/>
                                 ) : (
                                     <>
                                         <Link
